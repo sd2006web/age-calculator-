@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Age Calculator</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Outfit', sans-serif; }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-20px) rotate(5deg); }
+    }
+    
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.3); }
+      50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.6); }
+    }
+    
+    @keyframes slide-up {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes count-up {
+      from { opacity: 0; transform: scale(0.5); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    
+    .float-animation { animation: float 6s ease-in-out infinite; }
+    .float-animation-delayed { animation: float 6s ease-in-out infinite; animation-delay: -2s; }
+    .float-animation-delayed-2 { animation: float 6s ease-in-out infinite; animation-delay: -4s; }
+    .pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+    .slide-up { animation: slide-up 0.6s ease-out forwards; }
+    .count-up { animation: count-up 0.4s ease-out forwards; }
+    
+    .gradient-bg {
+      background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    }
+    
+    .glass-card {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .input-glow:focus {
+      box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.3);
+    }
+    
+    .result-card {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div id="app-container" class="h-full w-full gradient-bg overflow-auto relative"><!-- Floating decorative elements -->
+   <div class="absolute top-20 left-10 w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 blur-xl float-animation"></div>
+   <div class="absolute top-40 right-20 w-32 h-32 rounded-full bg-gradient-to-br from-pink-500/20 to-rose-500/20 blur-xl float-animation-delayed"></div>
+   <div class="absolute bottom-40 left-1/4 w-24 h-24 rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-500/20 blur-xl float-animation-delayed-2"></div>
+   <div class="absolute bottom-20 right-1/3 w-16 h-16 rounded-full bg-gradient-to-br from-amber-500/20 to-orange-500/20 blur-xl float-animation"></div>
+   <div class="relative z-10 min-h-full flex flex-col items-center justify-center px-4 py-12"><!-- Header -->
+    <div class="text-center mb-10">
+     <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 mb-6 pulse-glow">
+      <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+     </div>
+     <h1 id="main-title" class="text-4xl md:text-5xl font-bold text-white mb-3 tracking-tight">Age Calculator</h1>
+     <p id="subtitle" class="text-indigo-200/80 text-lg">Discover exactly how long you've been amazing</p>
+    </div><!-- Calculator Card -->
+    <div class="glass-card rounded-3xl p-8 md:p-10 w-full max-w-md">
+     <form id="age-form" class="space-y-6">
+      <div class="space-y-2"><label for="birthdate" class="block text-sm font-medium text-indigo-200">Your Birth Date</label> <input type="date" id="birthdate" required class="w-full px-5 py-4 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none input-glow transition-all duration-300 text-lg">
+      </div><button id="calculate-btn" type="submit" class="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold text-lg hover:from-indigo-600 hover:to-purple-700 transform hover:scale-[1.02] transition-all duration-300 shadow-lg hover:shadow-indigo-500/30"> Calculate My Age ✨ </button>
+     </form><!-- Results Section -->
+     <div id="results" class="hidden mt-8 space-y-6">
+      <div class="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div><!-- Main Age Display -->
+      <div class="text-center py-6">
+       <div class="inline-flex items-baseline gap-2"><span id="years-display" class="text-6xl md:text-7xl font-bold bg-gradient-to-r from-indigo-300 via-purple-300 to-pink-300 bg-clip-text text-transparent">0</span> <span class="text-2xl text-indigo-200/80 font-medium">years old</span>
+       </div>
+      </div><!-- Detailed Breakdown -->
+      <div class="grid grid-cols-3 gap-3">
+       <div class="result-card rounded-2xl p-4 text-center">
+        <div id="months-display" class="text-2xl md:text-3xl font-bold text-white">
+         0
+        </div>
+        <div class="text-xs text-indigo-200/70 mt-1">
+         Months
+        </div>
+       </div>
+       <div class="result-card rounded-2xl p-4 text-center">
+        <div id="days-display" class="text-2xl md:text-3xl font-bold text-white">
+         0
+        </div>
+        <div class="text-xs text-indigo-200/70 mt-1">
+         Days
+        </div>
+       </div>
+       <div class="result-card rounded-2xl p-4 text-center">
+        <div id="hours-display" class="text-2xl md:text-3xl font-bold text-white">
+         0
+        </div>
+        <div class="text-xs text-indigo-200/70 mt-1">
+         Hours
+        </div>
+       </div>
+      </div><!-- Fun Stats -->
+      <div class="space-y-3 pt-4">
+       <h3 class="text-sm font-semibold text-indigo-200/60 uppercase tracking-wider">Fun Facts About Your Journey</h3>
+       <div class="glass-card rounded-xl p-4 flex items-center gap-4">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500/30 to-rose-500/30 flex items-center justify-center flex-shrink-0"><span class="text-lg">💓</span>
+        </div>
+        <div>
+         <div id="heartbeats" class="text-lg font-semibold text-white">
+          0
+         </div>
+         <div class="text-xs text-indigo-200/60">
+          Heartbeats (approx.)
+         </div>
+        </div>
+       </div>
+       <div class="glass-card rounded-xl p-4 flex items-center gap-4">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500/30 to-orange-500/30 flex items-center justify-center flex-shrink-0"><span class="text-lg">🌅</span>
+        </div>
+        <div>
+         <div id="sunrises" class="text-lg font-semibold text-white">
+          0
+         </div>
+         <div class="text-xs text-indigo-200/60">
+          Sunrises witnessed
+         </div>
+        </div>
+       </div>
+       <div class="glass-card rounded-xl p-4 flex items-center gap-4">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500/30 to-blue-500/30 flex items-center justify-center flex-shrink-0"><span class="text-lg">🌙</span>
+        </div>
+        <div>
+         <div id="sleeps" class="text-lg font-semibold text-white">
+          0
+         </div>
+         <div class="text-xs text-indigo-200/60">
+          Nights of sleep
+         </div>
+        </div>
+       </div>
+       <div class="glass-card rounded-xl p-4 flex items-center gap-4">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500/30 to-teal-500/30 flex items-center justify-center flex-shrink-0"><span class="text-lg">🎂</span>
+        </div>
+        <div>
+         <div id="next-birthday" class="text-lg font-semibold text-white">
+          0 days
+         </div>
+         <div class="text-xs text-indigo-200/60">
+          Until your next birthday
+         </div>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div><!-- Footer -->
+    <p class="mt-8 text-indigo-200/40 text-sm">Every moment counts ✨</p>
+   </div>
+  </div>
+  <script>
+    const defaultConfig = {
+      main_title: 'Age Calculator',
+      subtitle_text: 'Discover exactly how long you\'ve been amazing',
+      button_text: 'Calculate My Age ✨',
+      primary_color: '#6366f1',
+      secondary_color: '#a855f7',
+      background_color: '#302b63',
+      text_color: '#ffffff',
+      accent_color: '#818cf8'
+    };
+
+    async function onConfigChange(config) {
+      const title = config.main_title || defaultConfig.main_title;
+      const subtitle = config.subtitle_text || defaultConfig.subtitle_text;
+      const buttonText = config.button_text || defaultConfig.button_text;
+      const primaryColor = config.primary_color || defaultConfig.primary_color;
+      const secondaryColor = config.secondary_color || defaultConfig.secondary_color;
+      const backgroundColor = config.background_color || defaultConfig.background_color;
+      const textColor = config.text_color || defaultConfig.text_color;
+      const accentColor = config.accent_color || defaultConfig.accent_color;
+
+      document.getElementById('main-title').textContent = title;
+      document.getElementById('subtitle').textContent = subtitle;
+      document.getElementById('calculate-btn').textContent = buttonText;
+
+      // Apply colors
+      const container = document.getElementById('app-container');
+      container.style.background = `linear-gradient(135deg, ${backgroundColor} 0%, ${primaryColor}40 50%, ${backgroundColor} 100%)`;
+
+      document.getElementById('main-title').style.color = textColor;
+      document.getElementById('calculate-btn').style.background = `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`;
+
+      // Update accent elements
+      document.querySelectorAll('.result-card').forEach(card => {
+        card.style.background = `linear-gradient(135deg, ${primaryColor}33 0%, ${secondaryColor}33 100%)`;
+      });
+    }
+
+    function mapToCapabilities(config) {
+      return {
+        recolorables: [
+          {
+            get: () => config.background_color || defaultConfig.background_color,
+            set: (value) => { config.background_color = value; window.elementSdk.setConfig({ background_color: value }); }
+          },
+          {
+            get: () => config.primary_color || defaultConfig.primary_color,
+            set: (value) => { config.primary_color = value; window.elementSdk.setConfig({ primary_color: value }); }
+          },
+          {
+            get: () => config.text_color || defaultConfig.text_color,
+            set: (value) => { config.text_color = value; window.elementSdk.setConfig({ text_color: value }); }
+          },
+          {
+            get: () => config.secondary_color || defaultConfig.secondary_color,
+            set: (value) => { config.secondary_color = value; window.elementSdk.setConfig({ secondary_color: value }); }
+          },
+          {
+            get: () => config.accent_color || defaultConfig.accent_color,
+            set: (value) => { config.accent_color = value; window.elementSdk.setConfig({ accent_color: value }); }
+          }
+        ],
+        borderables: [],
+        fontEditable: undefined,
+        fontSizeable: undefined
+      };
+    }
+
+    function mapToEditPanelValues(config) {
+      return new Map([
+        ['main_title', config.main_title || defaultConfig.main_title],
+        ['subtitle_text', config.subtitle_text || defaultConfig.subtitle_text],
+        ['button_text', config.button_text || defaultConfig.button_text]
+      ]);
+    }
+
+    // Initialize SDK
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities,
+        mapToEditPanelValues
+      });
+    }
+
+    // Age Calculator Logic
+    document.getElementById('age-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const birthdate = new Date(document.getElementById('birthdate').value);
+      const today = new Date();
+      
+      if (birthdate > today) {
+        showError('Please select a date in the past');
+        return;
+      }
+      
+      calculateAge(birthdate, today);
+    });
+
+    function showError(message) {
+      const results = document.getElementById('results');
+      results.classList.remove('hidden');
+      results.innerHTML = `
+        <div class="text-center py-6">
+          <div class="text-rose-400 text-lg">${message}</div>
+        </div>
+      `;
+    }
+
+    function calculateAge(birthdate, today) {
+      // Calculate years, months, days
+      let years = today.getFullYear() - birthdate.getFullYear();
+      let months = today.getMonth() - birthdate.getMonth();
+      let days = today.getDate() - birthdate.getDate();
+      
+      if (days < 0) {
+        months--;
+        const prevMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+        days += prevMonth.getDate();
+      }
+      
+      if (months < 0) {
+        years--;
+        months += 12;
+      }
+      
+      // Calculate total values
+      const totalMs = today - birthdate;
+      const totalDays = Math.floor(totalMs / (1000 * 60 * 60 * 24));
+      const totalHours = Math.floor(totalMs / (1000 * 60 * 60));
+      const totalMonths = years * 12 + months;
+      
+      // Fun calculations
+      const heartbeats = Math.floor(totalDays * 24 * 60 * 80); // ~80 bpm average
+      const sunrises = totalDays;
+      const sleeps = totalDays;
+      
+      // Days until next birthday
+      const nextBirthday = new Date(today.getFullYear(), birthdate.getMonth(), birthdate.getDate());
+      if (nextBirthday < today) {
+        nextBirthday.setFullYear(today.getFullYear() + 1);
+      }
+      const daysUntilBirthday = Math.ceil((nextBirthday - today) / (1000 * 60 * 60 * 24));
+      
+      // Show results
+      const results = document.getElementById('results');
+      results.classList.remove('hidden');
+      
+      // Reset original content if error was shown
+      results.innerHTML = `
+        <div class="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+        
+        <div class="text-center py-6">
+          <div class="inline-flex items-baseline gap-2">
+            <span id="years-display" class="text-6xl md:text-7xl font-bold bg-gradient-to-r from-indigo-300 via-purple-300 to-pink-300 bg-clip-text text-transparent count-up">0</span>
+            <span class="text-2xl text-indigo-200/80 font-medium">years old</span>
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-3 gap-3">
+          <div class="result-card rounded-2xl p-4 text-center slide-up" style="animation-delay: 0.1s">
+            <div id="months-display" class="text-2xl md:text-3xl font-bold text-white">0</div>
+            <div class="text-xs text-indigo-200/70 mt-1">Months</div>
+          </div>
+          <div class="result-card rounded-2xl p-4 text-center slide-up" style="animation-delay: 0.2s">
+            <div id="days-display" class="text-2xl md:text-3xl font-bold text-white">0</div>
+            <div class="text-xs text-indigo-200/70 mt-1">Days</div>
+          </div>
+          <div class="result-card rounded-2xl p-4 text-center slide-up" style="animation-delay: 0.3s">
+            <div id="hours-display" class="text-2xl md:text-3xl font-bold text-white">0</div>
+            <div class="text-xs text-indigo-200/70 mt-1">Hours</div>
+          </div>
+        </div>
+        
+        <div class="space-y-3 pt-4">
+          <h3 class="text-sm font-semibold text-indigo-200/60 uppercase tracking-wider">Fun Facts About Your Journey</h3>
+          
+          <div class="glass-card rounded-xl p-4 flex items-center gap-4 slide-up" style="animation-delay: 0.4s">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500/30 to-rose-500/30 flex items-center justify-center flex-shrink-0">
+              <span class="text-lg">💓</span>
+            </div>
+            <div>
+              <div id="heartbeats" class="text-lg font-semibold text-white">0</div>
+              <div class="text-xs text-indigo-200/60">Heartbeats (approx.)</div>
+            </div>
+          </div>
+          
+          <div class="glass-card rounded-xl p-4 flex items-center gap-4 slide-up" style="animation-delay: 0.5s">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500/30 to-orange-500/30 flex items-center justify-center flex-shrink-0">
+              <span class="text-lg">🌅</span>
+            </div>
+            <div>
+              <div id="sunrises" class="text-lg font-semibold text-white">0</div>
+              <div class="text-xs text-indigo-200/60">Sunrises witnessed</div>
+            </div>
+          </div>
+          
+          <div class="glass-card rounded-xl p-4 flex items-center gap-4 slide-up" style="animation-delay: 0.6s">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500/30 to-blue-500/30 flex items-center justify-center flex-shrink-0">
+              <span class="text-lg">🌙</span>
+            </div>
+            <div>
+              <div id="sleeps" class="text-lg font-semibold text-white">0</div>
+              <div class="text-xs text-indigo-200/60">Nights of sleep</div>
+            </div>
+          </div>
+          
+          <div class="glass-card rounded-xl p-4 flex items-center gap-4 slide-up" style="animation-delay: 0.7s">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500/30 to-teal-500/30 flex items-center justify-center flex-shrink-0">
+              <span class="text-lg">🎂</span>
+            </div>
+            <div>
+              <div id="next-birthday" class="text-lg font-semibold text-white">0 days</div>
+              <div class="text-xs text-indigo-200/60">Until your next birthday</div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // Animate numbers
+      animateNumber('years-display', years, 800);
+      animateNumber('months-display', totalMonths, 1000);
+      animateNumber('days-display', totalDays, 1200);
+      animateNumber('hours-display', totalHours, 1400);
+      
+      // Set fun stats with animation
+      setTimeout(() => {
+        document.getElementById('heartbeats').textContent = formatNumber(heartbeats);
+      }, 800);
+      setTimeout(() => {
+        document.getElementById('sunrises').textContent = formatNumber(sunrises);
+      }, 1000);
+      setTimeout(() => {
+        document.getElementById('sleeps').textContent = formatNumber(sleeps);
+      }, 1200);
+      setTimeout(() => {
+        document.getElementById('next-birthday').textContent = daysUntilBirthday === 0 ? '🎉 Today!' : `${daysUntilBirthday} days`;
+      }, 1400);
+    }
+
+    function animateNumber(elementId, target, duration) {
+      const element = document.getElementById(elementId);
+      const start = 0;
+      const startTime = performance.now();
+      
+      function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easeProgress = 1 - Math.pow(1 - progress, 3);
+        const current = Math.floor(start + (target - start) * easeProgress);
+        
+        element.textContent = formatNumber(current);
+        
+        if (progress < 1) {
+          requestAnimationFrame(update);
+        }
+      }
+      
+      requestAnimationFrame(update);
+    }
+
+    function formatNumber(num) {
+      if (num >= 1000000000) {
+        return (num / 1000000000).toFixed(1) + 'B';
+      }
+      if (num >= 1000000) {
+        return (num / 1000000).toFixed(1) + 'M';
+      }
+      if (num >= 1000) {
+        return num.toLocaleString();
+      }
+      return num.toString();
+    }
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9d2d2dc671be6ef5',t:'MTc3MTkxNzQwMC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
